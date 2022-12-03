@@ -19,7 +19,10 @@ showChat.addEventListener("click", () => {
   document.querySelector(".header__back").style.display = "block";
 });
 
-const user = prompt("Enter your name");
+var user = prompt("Enter your name");
+while (!user) {
+  user = prompt("Enter your name");
+}
 
 const peer = new Peer();
 
@@ -32,7 +35,6 @@ navigator.mediaDevices
   .then((stream) => {
     myVideoStream = stream;
     addVideoStream(myVideo, stream);
-
     peer.on("call", (call) => {
       call.answer(stream);
       const video = document.createElement("video");
@@ -41,7 +43,7 @@ navigator.mediaDevices
       });
     });
 
-    socket.on("user-connected", (userId) => {
+    socket.on("user-connected", (userId, userName) => {
       connectToNewUser(userId, stream);
     });
   });
@@ -53,7 +55,6 @@ const connectToNewUser = (userId, stream) => {
     addVideoStream(video, userVideoStream);
   });
 };
-
 
 peer.on("open", (id) => {
   socket.emit("join-room", ROOM_ID, id, user);
@@ -131,4 +132,16 @@ socket.on("createMessage", (message, userName) => {
     `<div class="message">
         <span><b>${userName === user ? "Me" : userName} : </b>${message}</span>
     </div>`;
+});
+
+socket.on("user-disconnected", (userName) => {
+  const video = document.getElementsByTagName("video");
+  const messages = Array.from(document.getElementsByClassName("message"));
+  messages.forEach((box) => {
+    box.remove();
+  });
+  const other = video[1];
+  other.remove();
+
+  alert(`${userName} Left`);
 });
